@@ -41,8 +41,8 @@ bool vSSA::runOnFunction(Function &F) {
 
   // Iterate over all Basic Blocks of the Function, calling the function that
   // creates sigma functions, if needed
-  for (Function::iterator Fit = F.begin(), Fend = F.end(); Fit != Fend; ++Fit) {
-    BasicBlock *BB = &(*Fit);
+  for (auto &Fit : F) {
+    BasicBlock *BB = &Fit;
     createSigmasIfNeeded(BB);
   }
   return true;
@@ -62,9 +62,8 @@ void vSSA::createSigmasIfNeeded(BasicBlock *BB) {
 
       if (comparison) {
         // Create sigmas for ICmp operands
-        for (User::const_op_iterator opit = comparison->op_begin(),
-                                     opend = comparison->op_end();
-             opit != opend; ++opit) {
+        for (User::const_op_iterator opit = comparison->op_begin();
+             opit != comparison->op_end(); ++opit) {
           Value *operand = *opit;
 
           if (isa<Instruction>(operand) || isa<Argument>(operand)) {
@@ -144,7 +143,7 @@ void vSSA::insertSigmas(Instruction *TI, Value *V) {
       renameUsesToSigma(V, sigma);
 
       // Get the dominance frontier of the successor
-      DominanceFrontier::iterator DF_BB = DF_->find(BB_next);
+      auto DF_BB = DF_->find(BB_next);
 
       /*
        * Creation (or operand insertion) of the SSI_PHI
@@ -178,13 +177,11 @@ void vSSA::insertSigmas(Instruction *TI, Value *V) {
 
   // Insertion of vSSA_phi functions may require the creation of vSSA_phi
   // functions too, so we call this function recursively
-  for (SmallVectorImpl<PHINode *>::iterator vit = vssaphi_created.begin(),
-                                            vend = vssaphi_created.end();
-       vit != vend; ++vit) {
+  for (auto &vit : vssaphi_created) {
     // Rename uses of V to phi
-    renameUsesToPhi(V, *vit);
+    renameUsesToPhi(V, vit);
 
-    insertPhisForPhi(V, *vit);
+    insertPhisForPhi(V, vit);
   }
 }
 
@@ -200,7 +197,7 @@ void vSSA::renameUsesToSigma(Value *V, PHINode *sigma) {
   BasicBlock *BB_next = sigma->getParent();
 
   // Get the dominance frontier of the successor
-  DominanceFrontier::iterator DF_BB = DF_->find(BB_next);
+  auto DF_BB = DF_->find(BB_next);
 
   // This vector of Instruction* points to the uses of V.
   // This auxiliary vector of pointers is used because the use_iterators are
@@ -209,8 +206,8 @@ void vSSA::renameUsesToSigma(Value *V, PHINode *sigma) {
   unsigned i = 0, n = V->getNumUses();
   usepointers.resize(n);
 
-  for (Value::user_iterator uit = V->user_begin(), uend = V->user_end();
-       uit != uend; ++uit, ++i)
+  for (Value::user_iterator uit = V->user_begin(); uit != V->user_end();
+       ++uit, ++i)
     usepointers[i] = dyn_cast<Instruction>(*uit);
 
   for (i = 0; i < n; ++i) {
@@ -260,16 +257,12 @@ SmallVector<PHINode *, 25> vSSA::insertPhisForSigma(Value *V, PHINode *sigma) {
   BasicBlock *BB = sigma->getParent();
 
   // Get the dominance frontier of the successor
-  DominanceFrontier::iterator DF_BB = DF_->find(BB);
+  auto DF_BB = DF_->find(BB);
 
   // Iterate over the dominance frontier of the successor.
   // We have to create SSI_PHI functions in the basicblocks in the frontier,
   // depending on some conditions
-  for (std::set<BasicBlock *>::iterator DFit = DF_BB->second.begin(),
-                                        DFend = DF_BB->second.end();
-       DFit != DFend; ++DFit) {
-    BasicBlock *BB_infrontier = *DFit;
-
+  for (auto BB_infrontier : DF_BB->second) {
     // Check if the Value sigmed dominates this basicblock
     // We need to differentiate Instruction and Argument
     bool condition = false;
@@ -313,11 +306,7 @@ void vSSA::insertPhisForPhi(Value *V, PHINode *phi) {
   // Iterate over the dominance frontier of the successor.
   // We have to create SSI_PHI functions in the basicblocks in the frontier,
   // depending on some conditions
-  for (std::set<BasicBlock *>::iterator DFit = DF_BB->second.begin(),
-                                        DFend = DF_BB->second.end();
-       DFit != DFend; ++DFit) {
-    BasicBlock *BB_infrontier = *DFit;
-
+  for (auto BB_infrontier : DF_BB->second) {
     // Check if the Value phied dominates this basicblock
     // We need to differentiate Instruction and Argument
     bool condition = false;
@@ -384,8 +373,8 @@ void vSSA::renameUsesToPhi(Value *V, PHINode *phi) {
   // Get the dominance frontier of the successor
   DominanceFrontier::iterator DF_BB = DF_->find(BB_next);
 
-  for (Value::user_iterator uit = V->user_begin(), uend = V->user_end();
-       uit != uend; ++uit, ++i)
+  for (Value::user_iterator uit = V->user_begin(); uit != V->user_end();
+       ++uit, ++i)
     usepointers[i] = dyn_cast<Instruction>(*uit);
 
   BasicBlock *BB_parent = phi->getParent();
@@ -483,13 +472,11 @@ void vSSA::renameUsesToPhi(Value *V, PHINode *phi) {
   // Try to create phis again for the sigmas whose operand was renamed to
   // vSSA_phi
   // Also, renaming may need to be done again
-  for (SmallVectorImpl<PHINode *>::iterator vit = sigmasRenamed.begin(),
-                                            vend = sigmasRenamed.end();
-       vit != vend; ++vit) {
-    renameUsesToSigma(phi, *vit);
-    SmallVector<PHINode *, 25> vssaphis_created = insertPhisForSigma(phi, *vit);
+  for (auto &vit : sigmasRenamed) {
+    renameUsesToSigma(phi, vit);
+    SmallVector<PHINode *, 25> vssaphis_created = insertPhisForSigma(phi, vit);
     // insertSigmaAsOperandOfPhis(vssaphis_created, *vit);
-    populatePhis(vssaphis_created, (*vit)->getIncomingValue(0));
+    populatePhis(vssaphis_created, vit->getIncomingValue(0));
   }
 
   // Creation of phis may require the creation of sigmas that were not created
@@ -504,11 +491,7 @@ void vSSA::insertSigmaAsOperandOfPhis(
     SmallVector<PHINode *, 25> &vssaphi_created, PHINode *sigma) {
   BasicBlock *BB = sigma->getParent();
 
-  for (SmallVectorImpl<PHINode *>::iterator vit = vssaphi_created.begin(),
-                                            vend = vssaphi_created.end();
-       vit != vend; ++vit) {
-    PHINode *vssaphi = *vit;
-
+  for (auto vssaphi : vssaphi_created) {
     BasicBlock *predBB = NULL;
     pred_iterator PI = pred_begin(vssaphi->getParent());
     pred_iterator PE = pred_end(vssaphi->getParent());
@@ -533,10 +516,7 @@ void vSSA::insertSigmaAsOperandOfPhis(
 void vSSA::populatePhis(SmallVector<PHINode *, 25> &vssaphi_created, Value *V) {
   // If any vSSA_PHI was created, iterate over the predecessors of vSSA_PHIs to
   // insert V as an operand from the branches where sigma was not created
-  for (SmallVectorImpl<PHINode *>::iterator vit = vssaphi_created.begin(),
-                                            vend = vssaphi_created.end();
-       vit != vend; ++vit) {
-    PHINode *vssaphi = *vit;
+  for (auto vssaphi : vssaphi_created) {
     BasicBlock *BB_parent = vssaphi->getParent();
 
     DenseMap<BasicBlock *, unsigned> howManyTimesIsPred;
@@ -602,9 +582,8 @@ bool vSSA::dominateAny(BasicBlock *BB, Value *value) {
   // do it
   // Otherwise, if the use is dominated by the BasicBlock in-frontier, we create
   // the vSSA_PHI
-  for (Value::user_iterator begin = value->user_begin(),
-                            end = value->user_end();
-       begin != end; ++begin) {
+  for (Value::user_iterator begin = value->user_begin();
+       begin != value->user_end(); ++begin) {
     Instruction *I = cast<Instruction>(*begin);
     BasicBlock *BB_father = I->getParent();
     if (BB == BB_father && isa<PHINode>(I)) {
@@ -626,9 +605,8 @@ bool vSSA::dominateOrHasInFrontier(BasicBlock *BB, BasicBlock *BB_next,
                                    Value *value) {
   DominanceFrontier::iterator DF_BB = DF_->find(BB_next);
 
-  for (Value::user_iterator begin = value->user_begin(),
-                            end = value->user_end();
-       begin != end; ++begin) {
+  for (Value::user_iterator begin = value->user_begin();
+       begin != value->user_end(); ++begin) {
     Instruction *I = dyn_cast<Instruction>(*begin);
 
     // ATTENTION: GEP uses are not taken into account
