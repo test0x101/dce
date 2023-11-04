@@ -40,7 +40,7 @@ bool RADeadCodeElimination::runOnFunction(Function &F) {
   change |= eliminate_branch(F);
 
   if (change) { // eliminate
-    // eliminate PHI-nodes with one operand
+    //  PHI-nodes with one operand
     eliminate_phi_nodes(F);
 
     // remove simple blocks with only have unconditional branch
