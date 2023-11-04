@@ -22,11 +22,11 @@ endif()
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
 
 add_library(RangeAnalysis MODULE
-    lib/RangeAnalysis.cpp
-    lib/vSSA.cpp
-    lib/DeadCodeElimination.cpp
+        src/RangeAnalysis.cpp
+        src/vSSA.cpp
+        src/DeadCodeElimination.cpp
 )
 
 target_include_directories(RangeAnalysis PRIVATE
-    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src"
 )
