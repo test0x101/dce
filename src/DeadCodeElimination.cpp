@@ -60,16 +60,11 @@ bool RADeadCodeElimination::runOnBasicBlock(Function::iterator &bb) {
       send_to_delete_instruction(&*I);
     } else if (isa<BinaryOperator>(I)) {
       solveBinaryInst(I);
-    } else if (ICmpInst *icmpInst = dyn_cast<ICmpInst>(&*I)) {
+    } else if (auto *icmpInst = dyn_cast<ICmpInst>(&*I)) {
       if (solveICmpInstruction(icmpInst)) {
         send_to_delete_instruction(icmpInst);
       }
     }
-    /*
-    if (!r.isUnknown()) {
-        r.print(errs());
-        errs() << *I << "\n";
-    }*/
   }
   return false;
 }
@@ -79,10 +74,9 @@ bool RADeadCodeElimination::eliminate_phi_nodes(Function &F) {
   queue<BasicBlock::iterator> Q;
   bool change = false;
 
-  for (Function::iterator bb = F.begin(), bbEnd = F.end(); bb != bbEnd; ++bb) {
-    for (BasicBlock::iterator I = bb->begin(), IEnd = bb->end(); I != IEnd;
-         ++I) {
-      if (PHINode *phi = dyn_cast<PHINode>(I)) {
+  for (auto &bb : F) {
+    for (BasicBlock::iterator I = bb.begin(); I != bb.end(); ++I) {
+      if (auto *phi = dyn_cast<PHINode>(I)) {
         if (phi->getNumOperands() == 1) {
           I->replaceAllUsesWith(phi->getOperand(0));
           Q.push(I);
@@ -188,24 +182,24 @@ bool RADeadCodeElimination::solveBinaryInst(BasicBlock::iterator I) {
   switch (I->getOpcode()) {
   case Instruction::And:
     if (verify_equal(r1, r2)) {
-      dead_op_bin.push_back(make_pair(&*I, I->getOperand(0)));
+      dead_op_bin.emplace_back(&*I, I->getOperand(0));
       return true;
     } else if (r1.getLower().eq(r1.getUpper())) {
       if (r1.getLower() == 0) {
-        dead_op_bin.push_back(make_pair(&*I, I->getOperand(0)));
+        dead_op_bin.emplace_back(&*I, I->getOperand(0));
         return true;
       } else if (r1.getUpper() == 1 && r2.getLower() == 0 &&
                  r2.getUpper() == 1) {
-        dead_op_bin.push_back(make_pair(&*I, I->getOperand(1)));
+        dead_op_bin.emplace_back(&*I, I->getOperand(1));
         return true;
       }
     } else if (r2.getLower().eq(r2.getUpper())) {
       if (r2.getLower() == 0) {
-        dead_op_bin.push_back(make_pair(&*I, I->getOperand(1)));
+        dead_op_bin.emplace_back(&*I, I->getOperand(1));
         return true;
       } else if (r2.getUpper() == 1 && r1.getLower() == 0 &&
                  r1.getUpper() == 1) {
-        dead_op_bin.push_back(make_pair(&*I, I->getOperand(0)));
+        dead_op_bin.emplace_back(&*I, I->getOperand(0));
         return true;
       }
     }
@@ -254,7 +248,7 @@ bool RADeadCodeElimination::eliminate_branch(Function &F) {
     succ = dead_branch.front().second;
     dead_branch.pop();
 
-    BranchInst *Old = dyn_cast<BranchInst>(I);
+    auto *Old = dyn_cast<BranchInst>(I);
     BranchInst *New = BranchInst::Create(Old->getSuccessor((succ + 1) % 2));
 
     BasicBlock *BB = &(*Old->getSuccessor(succ));
@@ -265,7 +259,7 @@ bool RADeadCodeElimination::eliminate_branch(Function &F) {
       BB = Q.front();
       Q.pop();
       if (BasicBlock *PredBB = BB->getUniquePredecessor()) {
-        // counter the number of instructions will be remove by unlink in the
+        // counter the number of instructions will be removed by unlink in the
         // block
         for (BasicBlock::iterator ii = BB->begin(), IEnd = BB->end();
              ii != IEnd; ++ii) {
@@ -413,7 +407,7 @@ bool RADeadCodeElimination::send_to_delete_branch(Instruction *I, int operand) {
   // "\n";
   if (I->getParent()->getTerminator()->getOpcode() == Instruction::Ret)
     return false;
-  dead_branch.push(make_pair(I->getParent()->getTerminator(), operand));
+  dead_branch.emplace(I->getParent()->getTerminator(), operand);
   return true;
 }
 

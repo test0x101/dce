@@ -1789,16 +1789,16 @@ Range ConstraintGraph::getRange(const Value *v) {
     // I decided NOT to insert these uncovered
     // values to the node set after their range
     // is created here.
-    const ConstantInt *ci = dyn_cast<ConstantInt>(v);
+    const auto *ci = dyn_cast<ConstantInt>(v);
     if (!ci) {
-      return Range(Min, Max, Unknown);
+      return {Min, Max, Unknown};
     } else {
       APInt tmp = ci->getValue();
       if (tmp.getBitWidth() < MAX_BIT_INT) {
         tmp = tmp.sext(MAX_BIT_INT);
       }
 
-      return Range(tmp, tmp);
+      return {tmp, tmp};
     }
   }
 
@@ -2777,7 +2777,7 @@ void ConstraintGraph::update(
     for (; bgn != end; ++bgn) {
       if (meet(*bgn, &constantvector)) {
         // I want to use it as a set, but I also want
-        // keep an order or insertions and removals.
+        // to keep an order or insertions and removals.
         actv.insert((*bgn)->getSink()->getValue());
       }
     }
