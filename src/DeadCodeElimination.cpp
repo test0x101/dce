@@ -106,7 +106,7 @@ bool RADeadCodeElimination::eliminate_unconditional_branch(Function &F) {
   queue<BasicBlock *> Q;
   for (BasicBlock &bb : F) {
     count = 0;
-    for (BasicBlock::iterator I = bb.begin(), IEnd = bb.end(); I != IEnd; ++I) {
+    for (BasicBlock::iterator I = bb.begin(); I != bb.end(); ++I) {
       count++;
     }
     Instruction *br = bb.getTerminator();
@@ -121,12 +121,11 @@ bool RADeadCodeElimination::eliminate_unconditional_branch(Function &F) {
     BasicBlock *bb_before = bb->getSinglePredecessor();
     Q.pop();
 
-    for (BasicBlock::iterator I = bb->begin(), IEnd = bb->end(); I != IEnd;
-         ++I) {
+    for (BasicBlock::iterator I = bb->begin(); I != bb->end(); ++I) {
       ++InstructionsEliminated;
     }
 
-    BranchInst *Old = dyn_cast<BranchInst>((bb_before)->getTerminator());
+    auto *Old = dyn_cast<BranchInst>((bb_before)->getTerminator());
     int j = 0;
     for (int i = 0; i < Old->getNumSuccessors(); ++i) {
       if (Old->getSuccessor(i) == &(*bb)) {
@@ -138,8 +137,8 @@ bool RADeadCodeElimination::eliminate_unconditional_branch(Function &F) {
     BasicBlock *bb_after = bb->getTerminator()->getSuccessor(0);
 
     // update phi-node
-    for (BasicBlock::iterator I = bb_after->begin(), IEnd = bb_after->end();
-         I != IEnd; ++I) {
+    for (BasicBlock::iterator I = bb_after->begin(); I != bb_after->end();
+         ++I) {
       if (PHINode *phi = dyn_cast<PHINode>(I)) {
         for (int i = 0; i < phi->getNumOperands(); ++i) {
           if (phi->getIncomingBlock(i) == bb) {
@@ -261,8 +260,7 @@ bool RADeadCodeElimination::eliminate_branch(Function &F) {
       if (BasicBlock *PredBB = BB->getUniquePredecessor()) {
         // counter the number of instructions will be removed by unlink in the
         // block
-        for (BasicBlock::iterator ii = BB->begin(), IEnd = BB->end();
-             ii != IEnd; ++ii) {
+        for (BasicBlock::iterator ii = BB->begin(); ii != BB->end(); ++ii) {
           InstructionsEliminated++;
         }
         BasicBlocksEliminated++;
