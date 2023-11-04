@@ -20,51 +20,48 @@
 using namespace llvm;
 
 #if DEBUG_RANGE
-  // These macros are used to get stats regarding the precision of our analysis.
-  STATISTIC(usedBits, "Initial number of bits.");
-  STATISTIC(needBits, "Needed bits.");
-  STATISTIC(percentReduction, "Percentage of reduction of the number of bits.");
-  STATISTIC(numSCCs, "Number of strongly connected components.");
-  STATISTIC(numAloneSCCs, "Number of SCCs containing only one node.");
-  STATISTIC(sizeMaxSCC, "Size of largest SCC.");
-  STATISTIC(numVars, "Number of variables");
-  STATISTIC(numUnknown, "Number of unknown variables");
-  STATISTIC(numEmpty, "Number of empty-set variables");
-  STATISTIC(numCPlusInf, "Number of variables [c, +inf].");
-  STATISTIC(numCC, "Number of variables [c, c].");
-  STATISTIC(numMinInfC, "Number of variables [-inf, c].");
-  STATISTIC(numMaxRange, "Number of variables [-inf, +inf].");
-  STATISTIC(numConstants, "Number of constants.");
-  STATISTIC(numZeroUses, "Number of variables without any use.");
-  STATISTIC(numNotInt, "Number of variables that are not Integer.");
-  STATISTIC(numOps, "Number of operations");
-  STATISTIC(maxVisit, "Max number of times a value has been visited.");
+// These macros are used to get stats regarding the precision of our analysis.
+STATISTIC(usedBits, "Initial number of bits.");
+STATISTIC(needBits, "Needed bits.");
+STATISTIC(percentReduction, "Percentage of reduction of the number of bits.");
+STATISTIC(numSCCs, "Number of strongly connected components.");
+STATISTIC(numAloneSCCs, "Number of SCCs containing only one node.");
+STATISTIC(sizeMaxSCC, "Size of largest SCC.");
+STATISTIC(numVars, "Number of variables");
+STATISTIC(numUnknown, "Number of unknown variables");
+STATISTIC(numEmpty, "Number of empty-set variables");
+STATISTIC(numCPlusInf, "Number of variables [c, +inf].");
+STATISTIC(numCC, "Number of variables [c, c].");
+STATISTIC(numMinInfC, "Number of variables [-inf, c].");
+STATISTIC(numMaxRange, "Number of variables [-inf, +inf].");
+STATISTIC(numConstants, "Number of constants.");
+STATISTIC(numZeroUses, "Number of variables without any use.");
+STATISTIC(numNotInt, "Number of variables that are not Integer.");
+STATISTIC(numOps, "Number of operations");
+STATISTIC(maxVisit, "Max number of times a value has been visited.");
 #else
-  int usedBits = 0;
-  int needBits = 0;
-  int percentReduction = 0;
-  int numSCCs = 0;
-  int numAloneSCCs = 0;
-  int sizeMaxSCC = 0;
-  int numVars = 0;
-  int numUnknown = 0;
-  int numEmpty = 0;
-  int numCPlusInf = 0;
-  int numCC = 0;
-  int numMinInfC = 0;
-  int numMaxRange = 0;
-  int numConstants = 0;
-  int numZeroUses = 0;
-  int numNotInt = 0;
-  int numOps = 0;
-  int maxVisit = 0;
+int usedBits = 0;
+int needBits = 0;
+int percentReduction = 0;
+int numSCCs = 0;
+int numAloneSCCs = 0;
+int sizeMaxSCC = 0;
+int numVars = 0;
+int numUnknown = 0;
+int numEmpty = 0;
+int numCPlusInf = 0;
+int numCC = 0;
+int numMinInfC = 0;
+int numMaxRange = 0;
+int numConstants = 0;
+int numZeroUses = 0;
+int numNotInt = 0;
+int numOps = 0;
+int maxVisit = 0;
 #endif
 
-
-
-
-//The pass ID is no longer necessary in LLVM 8.0. Use it in lower version:
-//InterProceduralRA<Cousot>::ID = 0;
+// The pass ID is no longer necessary in LLVM 8.0. Use it in lower version:
+// InterProceduralRA<Cousot>::ID = 0;
 
 // The number of bits needed to store the largest variable of the function
 // (APInt).
@@ -210,8 +207,7 @@ void IntraProceduralRA<CGT>::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
 }
 
-template <class CGT> IntraProceduralRA<CGT>::~IntraProceduralRA() {
-}
+template <class CGT> IntraProceduralRA<CGT>::~IntraProceduralRA() {}
 
 // ========================================================================== //
 // InterProceduralRangeAnalysis
@@ -247,7 +243,7 @@ template <class CGT> bool InterProceduralRA<CGT>::runOnModule(Module &M) {
   MAX_BIT_INT = getMaxBitWidth(M);
   updateMinMax(MAX_BIT_INT);
 
-// Build the Constraint Graph by running on each function
+  // Build the Constraint Graph by running on each function
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     // If the function is only a declaration, or if it has variable number of
     // arguments, do not match
@@ -430,8 +426,7 @@ void InterProceduralRA<CGT>::MatchParametersAndReturnValues(
   }
 }
 
-template <class CGT> InterProceduralRA<CGT>::~InterProceduralRA() {
-}
+template <class CGT> InterProceduralRA<CGT>::~InterProceduralRA() {}
 
 template <class CGT> char IntraProceduralRA<CGT>::ID = 0;
 static RegisterPass<IntraProceduralRA<Cousot>>
@@ -1074,8 +1069,8 @@ Range Range::Xor(const Range &other) const {
 }
 
 // Truncate
-//		- if the source range is entirely inside max bit range, he is the
-//result
+//		- if the source range is entirely inside max bit range, he is
+//the result
 //      - else, the result is the max bit range
 Range Range::truncate(unsigned bitwidth) const {
   APInt maxupper = APInt::getSignedMaxValue(bitwidth);
@@ -2812,7 +2807,7 @@ void ConstraintGraph::update(unsigned nIterations, const UseMap &compUseMap,
 
 /// Finds the intervals of the variables in the graph.
 void ConstraintGraph::findIntervals() {
-//	clearValueMaps();
+  //	clearValueMaps();
 
   buildSymbolicIntersectMap();
 
@@ -2824,7 +2819,7 @@ void ConstraintGraph::findIntervals() {
   unsigned numberOfSCCs = numSCCs;
 #endif
 
-// For each SCC in graph, do the following
+  // For each SCC in graph, do the following
   for (Nuutila::iterator nit = sccList.begin(), nend = sccList.end();
        nit != nend; ++nit) {
     SmallPtrSet<VarNode *, 32> &component = *sccList.components[*nit];
@@ -2856,10 +2851,10 @@ void ConstraintGraph::findIntervals() {
       buildConstantVector(component, compUseMap);
 #endif
 
-// generateEntryPoints(component, entryPoints);
-// iterate a fixed number of time before widening
-// update(component.size()*2 /*| NUMBER_FIXED_ITERATIONS*/, compUseMap,
-// entryPoints);
+      // generateEntryPoints(component, entryPoints);
+      // iterate a fixed number of time before widening
+      // update(component.size()*2 /*| NUMBER_FIXED_ITERATIONS*/, compUseMap,
+      // entryPoints);
 
 #ifdef PRINT_DEBUG
       if (func)

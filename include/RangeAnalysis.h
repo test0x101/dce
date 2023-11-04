@@ -37,43 +37,42 @@
 #ifndef LLVM_TRANSFORMS_RANGEANALYSIS_RANGEANALYSIS_H_
 #define LLVM_TRANSFORMS_RANGEANALYSIS_RANGEANALYSIS_H_
 
-#include "llvm/IR/Function.h"
-#include "llvm/Pass.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/ConstantRange.h"
-#include "llvm/IR/InstIterator.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/IR/CallSite.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/Debug.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Process.h"
-#include "llvm/Support/FileSystem.h"
-#include "llvm/Support/Timer.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/IR/CallSite.h"
+#include "llvm/IR/ConstantRange.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/InstIterator.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Module.h"
+#include "llvm/Pass.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FormatProviders.h"
+#include "llvm/Support/Process.h"
+#include "llvm/Support/Timer.h"
+#include "llvm/Support/raw_ostream.h"
+#include <algorithm>
 #include <chrono>
 #include <ctime>
 #include <deque>
-#include <stack>
 #include <set>
 #include <sstream>
-#include <algorithm>
+#include <stack>
 #include <string>
-#include <chrono>
 
 using namespace llvm;
 
 // Comment the line below to disable the debug of SCCs and optimize the code
 // generated.
-//#define SCC_DEBUG
+// #define SCC_DEBUG
 
 // Comment the line below to disable the dot printing of Constraint Graphs
-//#define PRINT_DEBUG
+// #define PRINT_DEBUG
 
 // Used to enable the stats computing. Comment the below line to disable it
 #define STATS
@@ -83,7 +82,7 @@ using namespace llvm;
 // running time, so I recommend leaving it activated
 #define JUMPSET
 
-//#define OVERFLOWHANDLER
+// #define OVERFLOWHANDLER
 
 // Used to limit the number of iterations of fixed meet operator.
 // This update runs before widening and is necessary to improve the result of
@@ -123,7 +122,7 @@ using namespace llvm;
 #endif
 
 //************************** Log Transactions ********************************//
-//#define LOG_TRANSACTIONS
+// #define LOG_TRANSACTIONS
 
 #ifdef LOG_TRANSACTIONS
 std::string _log_ErrorInfo;
@@ -789,7 +788,7 @@ public:
   virtual APInt getMin() = 0;
   virtual APInt getMax() = 0;
   virtual Range getRange(const Value *v) = 0;
-  virtual ~RangeAnalysis() { }
+  virtual ~RangeAnalysis() {}
 };
 
 template <class CGT>
@@ -814,7 +813,7 @@ template <class CGT>
 class IntraProceduralRA : public FunctionPass, RangeAnalysis {
 public:
   static char ID; // Pass identification, replacement for typeid
-  IntraProceduralRA() : FunctionPass(ID){
+  IntraProceduralRA() : FunctionPass(ID) {
     CG = NULL; /*errs() << "\nIntraProceduralRA ctor";*/
   }
   ~IntraProceduralRA();

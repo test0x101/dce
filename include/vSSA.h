@@ -8,16 +8,16 @@
 // Copyright (C) 2011-2012, 2014-2015	Victor Hugo Sperle Campos
 //
 //===----------------------------------------------------------------------===//
-#include "llvm/Pass.h"
-#include "llvm/ADT/Statistic.h"
-#include "llvm/IR/Dominators.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/IR/CFG.h"
-#include "llvm/IR/Instructions.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/DominanceFrontier.h"
+#include "llvm/IR/CFG.h"
+#include "llvm/IR/Dominators.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/Pass.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include <deque>
 #include <algorithm>
+#include <deque>
 
 namespace llvm {
 
@@ -48,4 +48,4 @@ private:
                                Value *value);
   bool verifySigmaExistance(Value *V, BasicBlock *BB, BasicBlock *from);
 };
-}
+} // namespace llvm
