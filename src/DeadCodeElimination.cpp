@@ -12,8 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "dce"
-
 #include "DeadCodeElimination.h"
 
 STATISTIC(InstructionsEliminated, "Number of instructions eliminated");

@@ -16,6 +16,7 @@
 #define DEBUG_TYPE "range-analysis"
 
 #include "RangeAnalysis.h"
+#include "vSSA.h"
 
 using namespace llvm;
 
@@ -973,9 +974,9 @@ Range Range::Or_conservative(const Range &other) const {
 
   APInt umax = APIntOps::umax(getLower(), other.getLower());
   if (umax.isMinValue())
-    return Range(Min, Max);
+    return {Min, Max};
 
-  return Range(umax, APInt::getNullValue(MAX_BIT_INT));
+  return {umax, APInt::getNullValue(MAX_BIT_INT)};
 }
 
 /*
@@ -1070,7 +1071,7 @@ Range Range::Xor(const Range &other) const {
 
 // Truncate
 //		- if the source range is entirely inside max bit range, he is
-//the result
+// the result
 //      - else, the result is the max bit range
 Range Range::truncate(unsigned bitwidth) const {
   APInt maxupper = APInt::getSignedMaxValue(bitwidth);
@@ -3010,7 +3011,7 @@ void ConstraintGraph::print(const Function &F, raw_ostream &OS) const {
 
 void ConstraintGraph::printToFile(const Function &F, Twine FileName) {
   std::error_code ErrorInfo;
-  raw_fd_ostream file(FileName.str().c_str(), ErrorInfo, sys::fs::F_Text);
+  raw_fd_ostream file(FileName.str().c_str(), ErrorInfo, sys::fs::OF_Text);
 
   if (!file.has_error()) {
     print(F, file);

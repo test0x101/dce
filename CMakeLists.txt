@@ -17,7 +17,7 @@ set(CMAKE_CXX_FLAGS "-O3 ${CMAKE_CXX_FLAGS} -fno-rtti")
 
 if (NOT LLVM_ENABLE_RTTI)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
-endif()
+endif ()
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
 
@@ -25,8 +25,8 @@ add_library(RangeAnalysis MODULE
         src/RangeAnalysis.cpp
         src/vSSA.cpp
         src/DeadCodeElimination.cpp
-)
+        )
 
 target_include_directories(RangeAnalysis PRIVATE
-    "${CMAKE_CURRENT_SOURCE_DIR}/src"
-)
+        "${CMAKE_CURRENT_SOURCE_DIR}/src"
+        )

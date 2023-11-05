@@ -23,6 +23,8 @@
 #ifndef _DEADE_CODE_ELIMINATION_H
 #define _DEADE_CODE_ELIMINATION_H
 
+#define DEBUG_TYPE "dce"
+
 #include "RangeAnalysis.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/IR/Function.h"
