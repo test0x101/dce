@@ -1054,7 +1054,7 @@ Range Range::Or(const Range &other) const {
     break;
   }
 
-  return Range(l, u);
+  return {l, u};
 }
 
 /*
@@ -1063,10 +1063,10 @@ Range Range::Or(const Range &other) const {
  */
 Range Range::Xor(const Range &other) const {
   if (this->isUnknown() || other.isUnknown()) {
-    return Range(Min, Max, Unknown);
+    return {Min, Max, Unknown};
   }
 
-  return Range(Min, Max);
+  return {Min, Max};
 }
 
 // Truncate
@@ -1086,7 +1086,7 @@ Range Range::truncate(unsigned bitwidth) const {
   if (this->getLower().sge(maxlower) && this->getUpper().sle(maxupper)) {
     return *this;
   } else {
-    return Range(maxlower, maxupper);
+    return {maxlower, maxupper};
   }
 }
 
