@@ -1759,14 +1759,12 @@ ConstraintGraph::~ConstraintGraph() {
     delete vit->second;
   }
 
-  for (GenOprs::iterator oit = oprs.begin(), oend = oprs.end(); oit != oend;
-       ++oit) {
+  for (GenOprs::iterator oit = oprs.begin(); oit != oprs.end(); ++oit) {
     delete *oit;
   }
 
-  for (ValuesBranchMap::iterator vit = valuesBranchMap.begin(),
-                                 vend = valuesBranchMap.end();
-       vit != vend; ++vit) {
+  for (ValuesBranchMap::iterator vit = valuesBranchMap.begin();
+       vit != valuesBranchMap.end(); ++vit) {
     vit->second.clear();
   }
 
@@ -2331,11 +2329,10 @@ void ConstraintGraph::buildValueBranchMap(const BranchInst *br) {
 }
 
 void ConstraintGraph::buildValueMaps(const Function &F) {
-  for (Function::const_iterator iBB = F.begin(), eBB = F.end(); iBB != eBB;
-       ++iBB) {
-    const Instruction *ti = iBB->getTerminator();
-    const BranchInst *br = dyn_cast<BranchInst>(ti);
-    const SwitchInst *sw = dyn_cast<SwitchInst>(ti);
+  for (const auto &iBB : F) {
+    const Instruction *ti = iBB.getTerminator();
+    const auto *br = dyn_cast<BranchInst>(ti);
+    const auto *sw = dyn_cast<SwitchInst>(ti);
 
     if (br) {
       buildValueBranchMap(br);
@@ -2366,11 +2363,7 @@ void ConstraintGraph::insertConstantIntoVector(APInt constantval) {
  */
 APInt getFirstGreaterFromVector(const SmallVector<APInt, 2> &constantvector,
                                 const APInt &val) {
-  for (SmallVectorImpl<APInt>::const_iterator vit = constantvector.begin(),
-                                              vend = constantvector.end();
-       vit != vend; ++vit) {
-    const APInt &vapint = *vit;
-
+  for (const auto &vapint : constantvector) {
     if (vapint.sge(val)) {
       return vapint;
     }
@@ -2384,10 +2377,9 @@ APInt getFirstGreaterFromVector(const SmallVector<APInt, 2> &constantvector,
  */
 APInt getFirstLessFromVector(const SmallVector<APInt, 2> &constantvector,
                              const APInt &val) {
-  for (SmallVectorImpl<APInt>::const_reverse_iterator
-           vit = constantvector.rbegin(),
-           vend = constantvector.rend();
-       vit != vend; ++vit) {
+  for (SmallVectorImpl<APInt>::const_reverse_iterator vit =
+           constantvector.rbegin();
+       vit != constantvector.rend(); ++vit) {
     const APInt &vapint = *vit;
 
     if (vapint.sle(val)) {
@@ -2413,10 +2405,8 @@ void ConstraintGraph::buildConstantVector(
   // Get constants inside component (TODO: may not be necessary, since
   // components with more than 1 node may
   // never have a constant inside them)
-  for (SmallPtrSetIterator<VarNode *> cit = component.begin(),
-                                      cend = component.end();
-       cit != cend; ++cit) {
-    const Value *V = (*cit)->getValue();
+  for (auto cit : component) {
+    const Value *V = cit->getValue();
     const ConstantInt *ci = NULL;
 
     if ((ci = dyn_cast<ConstantInt>(V))) {
@@ -2426,10 +2416,7 @@ void ConstraintGraph::buildConstantVector(
 
   // Get constants that are sources of operations whose sink belong to the
   // component
-  for (SmallPtrSetIterator<VarNode *> cit = component.begin(),
-                                      cend = component.end();
-       cit != cend; ++cit) {
-    const VarNode *var = (*cit);
+  for (auto var : component) {
     const Value *V = var->getValue();
 
     DefMap::iterator dfit = defMap.find(V);
@@ -2471,11 +2458,9 @@ void ConstraintGraph::buildConstantVector(
   }
 
   // Get constants used in intersections generated for sigmas
-  for (UseMap::const_iterator umit = compusemap.begin(),
-                              umend = compusemap.end();
-       umit != umend; ++umit) {
-    for (SmallPtrSetIterator<BasicOp *> sit = umit->second.begin(),
-                                        send = umit->second.end();
+  for (const auto &umit : compusemap) {
+    for (SmallPtrSetIterator<BasicOp *> sit = umit.second.begin(),
+                                        send = umit.second.end();
          sit != send; ++sit) {
       const SigmaOp *sigma = dyn_cast<SigmaOp>(*sit);
 
@@ -2545,10 +2530,8 @@ void ConstraintGraph::buildVarNodes() {
 
 // FIXME: do it just for component
 void CropDFS::storeAbstractStates(const SmallPtrSet<VarNode *, 32> *component) {
-  for (SmallPtrSetIterator<VarNode *> cit = component->begin(),
-                                      cend = component->end();
-       cit != cend; ++cit) {
-    (*cit)->storeAbstractState();
+  for (auto cit : *component) {
+    cit->storeAbstractState();
   }
 }
 
@@ -2722,7 +2705,7 @@ void CropDFS::posUpdate(const UseMap &compUseMap,
                         SmallPtrSet<const Value *, 6> &entryPoints,
                         const SmallPtrSet<VarNode *, 32> *component) {
   storeAbstractStates(component);
-  GenOprs::iterator obgn = oprs.begin(), oend = oprs.end();
+  auto obgn = oprs.begin(), oend = oprs.end();
   for (; obgn != oend; ++obgn) {
     BasicOp *op = *obgn;
 
@@ -2821,8 +2804,7 @@ void ConstraintGraph::findIntervals() {
 #endif
 
   // For each SCC in graph, do the following
-  for (Nuutila::iterator nit = sccList.begin(), nend = sccList.end();
-       nit != nend; ++nit) {
+  for (auto nit = sccList.begin(); nit != sccList.end(); ++nit) {
     SmallPtrSet<VarNode *, 32> &component = *sccList.components[*nit];
 #ifdef SCC_DEBUG
     --numberOfSCCs;
@@ -2869,11 +2851,7 @@ void ConstraintGraph::findIntervals() {
       fixIntersects(component);
 
       // FIXME: Ensure that this code is really needed
-      for (SmallPtrSetIterator<VarNode *> cit = component.begin(),
-                                          cend = component.end();
-           cit != cend; ++cit) {
-        VarNode *var = *cit;
-
+      for (auto var : component) {
         if (var->getRange().isUnknown()) {
           var->setRange(Range(Min, Max));
         }
@@ -2901,10 +2879,7 @@ void ConstraintGraph::generateEntryPoints(
     SmallPtrSet<VarNode *, 32> &component,
     SmallPtrSet<const Value *, 6> &entryPoints) {
   // Iterate over the varnodes in the component
-  for (SmallPtrSetIterator<VarNode *> cit = component.begin(),
-                                      cend = component.end();
-       cit != cend; ++cit) {
-    VarNode *var = *cit;
+  for (auto var : component) {
     const Value *V = var->getValue();
 
     if (V->getName().startswith(sigmaString)) {
@@ -2930,20 +2905,13 @@ void ConstraintGraph::generateEntryPoints(
 
 void ConstraintGraph::fixIntersects(SmallPtrSet<VarNode *, 32> &component) {
   // Iterate again over the varnodes in the component
-  for (SmallPtrSetIterator<VarNode *> cit = component.begin(),
-                                      cend = component.end();
-       cit != cend; ++cit) {
-    VarNode *var = *cit;
+  for (auto var : component) {
     const Value *V = var->getValue();
 
     SymbMap::iterator sit = symbMap.find(V);
 
     if (sit != symbMap.end()) {
-      for (SmallPtrSetIterator<BasicOp *> opit = sit->second.begin(),
-                                          opend = sit->second.end();
-           opit != opend; ++opit) {
-        BasicOp *op = *opit;
-
+      for (auto op : sit->second) {
         op->fixIntersects(var);
       }
     }
@@ -2954,13 +2922,10 @@ void ConstraintGraph::generateActivesVars(
     SmallPtrSet<VarNode *, 32> &component,
     SmallPtrSet<const Value *, 6> &activeVars) {
 
-  for (SmallPtrSetIterator<VarNode *> cit = component.begin(),
-                                      cend = component.end();
-       cit != cend; ++cit) {
-    VarNode *var = *cit;
+  for (auto var : component) {
     const Value *V = var->getValue();
 
-    const ConstantInt *CI = dyn_cast<ConstantInt>(V);
+    const auto *CI = dyn_cast<ConstantInt>(V);
     if (CI) {
       continue;
     }
@@ -2986,7 +2951,7 @@ void ConstraintGraph::print(const Function &F, raw_ostream &OS) const {
   // Print the body of the .dot file.
   VarNodes::const_iterator bgn, end;
   for (bgn = vars.begin(), end = vars.end(); bgn != end; ++bgn) {
-    if (const ConstantInt *C = dyn_cast<ConstantInt>(bgn->first)) {
+    if (const auto *C = dyn_cast<ConstantInt>(bgn->first)) {
       OS << " " << C->getValue();
     } else {
       OS << quot;
@@ -2997,7 +2962,7 @@ void ConstraintGraph::print(const Function &F, raw_ostream &OS) const {
     OS << " [label=\"" << bgn->second << "\"]\n";
   }
 
-  GenOprs::const_iterator B = oprs.begin(), E = oprs.end();
+  auto B = oprs.begin(), E = oprs.end();
   for (; B != E; ++B) {
     (*B)->print(OS);
     OS << "\n";
@@ -3023,9 +2988,8 @@ void ConstraintGraph::printToFile(const Function &F, Twine FileName) {
 }
 
 void ConstraintGraph::printResultIntervals() {
-  for (VarNodes::iterator vbgn = vars.begin(), vend = vars.end(); vbgn != vend;
-       ++vbgn) {
-    if (const ConstantInt *C = dyn_cast<ConstantInt>(vbgn->first)) {
+  for (auto vbgn = vars.begin(); vbgn != vars.end(); ++vbgn) {
+    if (const auto *C = dyn_cast<ConstantInt>(vbgn->first)) {
       errs() << C->getValue() << " ";
     } else {
       printVarName(vbgn->first, errs());
@@ -3039,29 +3003,28 @@ void ConstraintGraph::printResultIntervals() {
 }
 
 void ConstraintGraph::computeStats() {
-  for (VarNodes::const_iterator vbgn = vars.begin(), vend = vars.end();
-       vbgn != vend; ++vbgn) {
+  for (const auto &var : vars) {
     // We only count the instructions that have uses.
-    if (vbgn->first->getNumUses() == 0) {
+    if (var.first->getNumUses() == 0) {
       ++numZeroUses;
     }
 
     // ConstantInts must NOT be counted!!
-    if (isa<ConstantInt>(vbgn->first)) {
+    if (isa<ConstantInt>(var.first)) {
       ++numConstants;
       continue;
     }
 
     // Variables that are not IntegerTy are ignored
-    if (!vbgn->first->getType()->isIntegerTy()) {
+    if (!var.first->getType()->isIntegerTy()) {
       ++numNotInt;
       continue;
     }
 
     // Count original (used) bits
-    unsigned total = vbgn->first->getType()->getPrimitiveSizeInBits();
+    unsigned total = var.first->getType()->getPrimitiveSizeInBits();
     usedBits += total;
-    Range CR = vbgn->second->getRange();
+    Range CR = var.second->getRange();
 
     // If range is unknown, we have total needed bits
     if (CR.isUnknown()) {
@@ -3136,9 +3099,7 @@ UseMap
 ConstraintGraph::buildUseMap(const SmallPtrSet<VarNode *, 32> &component) {
   UseMap compUseMap;
 
-  for (SmallPtrSetIterator<VarNode *> vit = component.begin(),
-                                      vend = component.end();
-       vit != vend; ++vit) {
+  for (auto vit = component.begin(); vit != component.end(); ++vit) {
     const VarNode *var = *vit;
     const Value *V = var->getValue();
 
@@ -3150,14 +3111,12 @@ ConstraintGraph::buildUseMap(const SmallPtrSet<VarNode *, 32> &component) {
     UseMap::iterator p = this->useMap.find(V);
 
     // For each operation in the list, verify if its sink is in the component
-    for (SmallPtrSetIterator<BasicOp *> opit = p->second.begin(),
-                                        opend = p->second.end();
-         opit != opend; ++opit) {
-      VarNode *sink = (*opit)->getSink();
+    for (auto opit : p->second) {
+      VarNode *sink = opit->getSink();
 
       // If it is, add op to the component's use map
       if (component.count(sink)) {
-        list.insert(*opit);
+        list.insert(opit);
       }
     }
   }
@@ -3176,15 +3135,12 @@ void ConstraintGraph::buildSymbolicIntersectMap() {
   symbMap = SymbMap();
 
   // Iterate over the operations set
-  for (GenOprs::iterator oit = oprs.begin(), oend = oprs.end(); oit != oend;
-       ++oit) {
-    BasicOp *op = *oit;
-
+  for (auto op : oprs) {
     // If the operation is unary and its interval is symbolic
-    UnaryOp *uop = dyn_cast<UnaryOp>(op);
+    auto *uop = dyn_cast<UnaryOp>(op);
 
     if (uop && isa<SymbInterval>(uop->getIntersect())) {
-      SymbInterval *symbi = cast<SymbInterval>(uop->getIntersect());
+      auto *symbi = cast<SymbInterval>(uop->getIntersect());
 
       const Value *V = symbi->getBound();
       SymbMap::iterator p = symbMap.find(V);
@@ -3208,18 +3164,12 @@ void ConstraintGraph::buildSymbolicIntersectMap() {
  */
 void ConstraintGraph::propagateToNextSCC(
     const SmallPtrSet<VarNode *, 32> &component) {
-  for (SmallPtrSetIterator<VarNode *> cit = component.begin(),
-                                      cend = component.end();
-       cit != cend; ++cit) {
-    VarNode *var = *cit;
+  for (auto var : component) {
     const Value *V = var->getValue();
 
     UseMap::iterator p = this->useMap.find(V);
 
-    for (SmallPtrSetIterator<BasicOp *> sit = p->second.begin(),
-                                        send = p->second.end();
-         sit != send; ++sit) {
-      BasicOp *op = *sit;
+    for (auto op : p->second) {
       SigmaOp *sigmaop = dyn_cast<SigmaOp>(op);
 
       op->getSink()->setRange(op->eval());
@@ -3240,11 +3190,8 @@ void ConstraintGraph::propagateToNextSCC(
  */
 void Nuutila::addControlDependenceEdges(SymbMap *symbMap, UseMap *useMap,
                                         VarNodes *vars) {
-  for (SymbMap::iterator sit = symbMap->begin(), send = symbMap->end();
-       sit != send; ++sit) {
-    for (SmallPtrSetIterator<BasicOp *> opit = sit->second.begin(),
-                                        opend = sit->second.end();
-         opit != opend; ++opit) {
+  for (auto sit = symbMap->begin(); sit != symbMap->end(); ++sit) {
+    for (auto opit = sit->second.begin(); opit != sit->second.end(); ++opit) {
       // Cria uma operação pseudo-aresta
       VarNodes::iterator source_value = vars->find(sit->first);
       VarNode *source = source_value->second;
@@ -3259,25 +3206,19 @@ void Nuutila::addControlDependenceEdges(SymbMap *symbMap, UseMap *useMap,
  *	Removes the control dependence edges from the constraint graph.
  */
 void Nuutila::delControlDependenceEdges(UseMap *useMap) {
-  for (UseMap::iterator it = useMap->begin(), end = useMap->end(); it != end;
-       ++it) {
+  for (UseMap::iterator it = useMap->begin(); it != useMap->end(); ++it) {
 
     std::deque<ControlDep *> ops;
 
-    for (SmallPtrSetIterator<BasicOp *> sit = it->second.begin(),
-                                        send = it->second.end();
-         sit != send; ++sit) {
+    for (auto sit : it->second) {
       ControlDep *op = NULL;
 
-      if ((op = dyn_cast<ControlDep>(*sit))) {
+      if ((op = dyn_cast<ControlDep>(sit))) {
         ops.push_back(op);
       }
     }
 
-    for (std::deque<ControlDep *>::iterator dit = ops.begin(), dend = ops.end();
-         dit != dend; ++dit) {
-      ControlDep *op = *dit;
-
+    for (auto op : ops) {
       // Add pseudo edge to the string
       const Value *V = op->getSource()->getValue();
       if (const ConstantInt *C = dyn_cast<ConstantInt>(V)) {
@@ -3313,11 +3254,10 @@ void Nuutila::visit(Value *V, std::stack<Value *> &stack, UseMap *useMap) {
   root[V] = V;
 
   // Visit every node defined in an instruction that uses V
-  for (SmallPtrSetIterator<BasicOp *> sit = (*useMap)[V].begin(),
-                                      send = (*useMap)[V].end();
-       sit != send; ++sit) {
+  for (SmallPtrSetIterator<BasicOp *> sit = (*useMap)[V].begin();
+       sit != (*useMap)[V].end(); ++sit) {
     BasicOp *op = *sit;
-    Value *name = const_cast<Value *>(op->getSink()->getValue());
+    auto *name = const_cast<Value *>(op->getSink()->getValue());
 
     if (dfs[name] < 0) {
       visit(name, stack, useMap);
@@ -3337,7 +3277,7 @@ void Nuutila::visit(Value *V, std::stack<Value *> &stack, UseMap *useMap) {
     // list once more.
     worklist.push_back(V);
 
-    SmallPtrSet<VarNode *, 32> *SCC = new SmallPtrSet<VarNode *, 32>;
+    auto *SCC = new SmallPtrSet<VarNode *, 32>;
 
     SCC->insert((*variables)[V]);
 
@@ -3369,14 +3309,14 @@ void Nuutila::visit(Value *V, std::stack<Value *> &stack, UseMap *useMap) {
 Nuutila::Nuutila(VarNodes *varNodes, UseMap *useMap, SymbMap *symbMap,
                  bool single) {
   if (single) {
-    SmallPtrSet<VarNode *, 32> *SCC = new SmallPtrSet<VarNode *, 32>;
-    for (VarNodes::iterator vit = varNodes->begin(), vend = varNodes->end();
-         vit != vend; ++vit) {
+    auto *SCC = new SmallPtrSet<VarNode *, 32>;
+    for (VarNodes::iterator vit = varNodes->begin(); vit != varNodes->end();
+         ++vit) {
       SCC->insert(vit->second);
     }
 
-    for (VarNodes::iterator vit = varNodes->begin(), vend = varNodes->end();
-         vit != vend; ++vit) {
+    for (VarNodes::iterator vit = varNodes->begin(); vit != varNodes->end();
+         ++vit) {
       Value *V = const_cast<Value *>(vit->first);
       components[V] = SCC;
     }
@@ -3390,8 +3330,8 @@ Nuutila::Nuutila(VarNodes *varNodes, UseMap *useMap, SymbMap *symbMap,
     this->index = 0;
 
     // Iterate over all varnodes of the constraint graph
-    for (VarNodes::iterator vit = varNodes->begin(), vend = varNodes->end();
-         vit != vend; ++vit) {
+    for (VarNodes::iterator vit = varNodes->begin(); vit != varNodes->end();
+         ++vit) {
       // Initialize DFS control variable for each Value in the graph
       Value *V = const_cast<Value *>(vit->first);
       dfs[V] = -1;
@@ -3400,8 +3340,8 @@ Nuutila::Nuutila(VarNodes *varNodes, UseMap *useMap, SymbMap *symbMap,
     addControlDependenceEdges(symbMap, useMap, varNodes);
 
     // Iterate again over all varnodes of the constraint graph
-    for (VarNodes::iterator vit = varNodes->begin(), vend = varNodes->end();
-         vit != vend; ++vit) {
+    for (VarNodes::iterator vit = varNodes->begin(); vit != varNodes->end();
+         ++vit) {
       Value *V = const_cast<Value *>(vit->first);
 
       // If the Value has not been visited yet, call visit for him
@@ -3423,10 +3363,7 @@ Nuutila::Nuutila(VarNodes *varNodes, UseMap *useMap, SymbMap *symbMap,
 }
 
 Nuutila::~Nuutila() {
-  for (DenseMap<Value *, SmallPtrSet<VarNode *, 32> *>::iterator
-           mit = components.begin(),
-           mend = components.end();
-       mit != mend; ++mit) {
+  for (auto mit = components.begin(); mit != components.end(); ++mit) {
     delete mit->second;
   }
 }
