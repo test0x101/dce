@@ -371,7 +371,7 @@ void vSSA::renameUsesToPhi(Value *V, PHINode *phi) {
   BasicBlock *BB_next = phi->getParent();
 
   // Get the dominance frontier of the successor
-  DominanceFrontier::iterator DF_BB = DF_->find(BB_next);
+  auto DF_BB = DF_->find(BB_next);
 
   for (Value::user_iterator uit = V->user_begin(); uit != V->user_end();
        ++uit, ++i)
@@ -415,7 +415,7 @@ void vSSA::renameUsesToPhi(Value *V, PHINode *phi) {
   }
 
   for (unsigned k = 0, f = phi->getNumIncomingValues(); k < f; ++k) {
-    PHINode *p = dyn_cast<PHINode>(phi->getIncomingValue(k));
+    auto *p = dyn_cast<PHINode>(phi->getIncomingValue(k));
 
     if (!p || !p->getName().startswith(vSSA_SIG))
       continue;
@@ -522,8 +522,8 @@ void vSSA::populatePhis(SmallVector<PHINode *, 25> &vssaphi_created, Value *V) {
     DenseMap<BasicBlock *, unsigned> howManyTimesIsPred;
 
     // Get how many times each basicblock is predecessor of BB_parent
-    for (pred_iterator PI = pred_begin(BB_parent), PE = pred_end(BB_parent);
-         PI != PE; ++PI) {
+    for (pred_iterator PI = pred_begin(BB_parent); PI != pred_end(BB_parent);
+         ++PI) {
       BasicBlock *predBB = *PI;
 
       DenseMap<BasicBlock *, unsigned>::iterator mit =
@@ -603,7 +603,7 @@ bool vSSA::dominateAny(BasicBlock *BB, Value *value) {
  */
 bool vSSA::dominateOrHasInFrontier(BasicBlock *BB, BasicBlock *BB_next,
                                    Value *value) {
-  DominanceFrontier::iterator DF_BB = DF_->find(BB_next);
+  auto DF_BB = DF_->find(BB_next);
 
   for (Value::user_iterator begin = value->user_begin();
        begin != value->user_end(); ++begin) {

@@ -141,7 +141,7 @@ unsigned RangeAnalysis::getMaxBitWidth(const Function &F) {
   unsigned int InstBitSize = 0, opBitSize = 0, max = 0;
 
   // Obtains the maximum bit width of the instructions of the function.
-  for (const_inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
+  for (const_inst_iterator I = inst_begin(F); I != inst_end(F); ++I) {
     InstBitSize = I->getType()->getPrimitiveSizeInBits();
     if (I->getType()->isIntegerTy() && InstBitSize > max) {
       max = InstBitSize;
@@ -225,9 +225,9 @@ template <class CGT>
 unsigned InterProceduralRA<CGT>::getMaxBitWidth(Module &M) {
   unsigned max = 0;
   // Search through the functions for the max int bitwidth
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
-    if (!I->isDeclaration()) {
-      unsigned bitwidth = RangeAnalysis::getMaxBitWidth(*I);
+  for (auto &I : M) {
+    if (!I.isDeclaration()) {
+      unsigned bitwidth = RangeAnalysis::getMaxBitWidth(I);
 
       if (bitwidth > max)
         max = bitwidth;
@@ -245,14 +245,14 @@ template <class CGT> bool InterProceduralRA<CGT>::runOnModule(Module &M) {
   updateMinMax(MAX_BIT_INT);
 
   // Build the Constraint Graph by running on each function
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
+  for (auto &I : M) {
     // If the function is only a declaration, or if it has variable number of
     // arguments, do not match
-    if (I->isDeclaration() || I->isVarArg())
+    if (I.isDeclaration() || I.isVarArg())
       continue;
 
-    CG->buildGraph(*I);
-    MatchParametersAndReturnValues(*I, *CG);
+    CG->buildGraph(I);
+    MatchParametersAndReturnValues(I, *CG);
   }
   CG->buildVarNodes();
 
@@ -309,13 +309,12 @@ void InterProceduralRA<CGT>::MatchParametersAndReturnValues(
 
   if (!noReturn) {
     // Iterate over the basic blocks to fetch all possible return values
-    for (Function::iterator bb = F.begin(), bbend = F.end(); bb != bbend;
-         ++bb) {
+    for (auto &bb : F) {
       // Get the terminator instruction of the basic block and check if it's
       // a return instruction: if it's not, continue to next basic block
-      Instruction *terminator = bb->getTerminator();
+      Instruction *terminator = bb.getTerminator();
 
-      ReturnInst *RI = dyn_cast<ReturnInst>(terminator);
+      auto *RI = dyn_cast<ReturnInst>(terminator);
 
       if (!RI)
         continue;
@@ -344,16 +343,14 @@ void InterProceduralRA<CGT>::MatchParametersAndReturnValues(
   // For each return value, create a node
   std::vector<VarNode *> returnvars;
 
-  for (SmallPtrSetIterator<Value *> ri = ReturnValues.begin(),
-                                    re = ReturnValues.end();
-       ri != re; ++ri) {
+  for (auto ReturnValue : ReturnValues) {
     // Add VarNode to the CG
-    VarNode *from = G.addVarNode(*ri);
+    VarNode *from = G.addVarNode(ReturnValue);
 
     returnvars.push_back(from);
   }
 
-  for (Value::use_iterator UI = F.use_begin(), E = F.use_end(); UI != E; ++UI) {
+  for (Value::use_iterator UI = F.use_begin(); UI != F.use_end(); ++UI) {
     Use *U = &*UI;
     User *Us = U->getUser();
 

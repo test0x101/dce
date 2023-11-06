@@ -28,7 +28,7 @@ bool RADeadCodeElimination::runOnFunction(Function &F) {
   BasicBlocksEliminated = 0;
   bool change = false;
 
-  for (Function::iterator bb = F.begin(), bbEnd = F.end(); bb != bbEnd; ++bb) {
+  for (auto bb = F.begin(), bbEnd = F.end(); bb != bbEnd; ++bb) {
     runOnBasicBlock(bb);
   }
   // eliminate dead instructions
@@ -49,8 +49,7 @@ bool RADeadCodeElimination::runOnFunction(Function &F) {
 }
 
 bool RADeadCodeElimination::runOnBasicBlock(Function::iterator &bb) {
-  for (BasicBlock::iterator I = bb->begin(), IEnd = bb->end(); I != IEnd; ++I) {
-
+  for (auto I = bb->begin(); I != bb->end(); ++I) {
     const Value *v = &(*I);
     Range r = ra->getRange(v);
 
