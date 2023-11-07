@@ -22,7 +22,6 @@ namespace {
 RADeadCodeElimination::~RADeadCodeElimination() {}
 
 bool RADeadCodeElimination::runOnFunction(Function &F) {
-
   ra = &getAnalysis<InterProceduralRA<Cousot>>();
   InstructionsEliminated = 0;
   BasicBlocksEliminated = 0;
@@ -67,7 +66,6 @@ bool RADeadCodeElimination::runOnBasicBlock(Function::iterator &bb) {
 }
 
 bool RADeadCodeElimination::eliminate_phi_nodes(Function &F) {
-
   queue<BasicBlock::iterator> Q;
   bool change = false;
 
@@ -103,9 +101,9 @@ bool RADeadCodeElimination::eliminate_unconditional_branch(Function &F) {
   queue<BasicBlock *> Q;
   for (BasicBlock &bb : F) {
     count = 0;
-    for (BasicBlock::iterator I = bb.begin(); I != bb.end(); ++I) {
+    for (auto I = bb.begin(); I != bb.end(); ++I)
       count++;
-    }
+
     Instruction *br = bb.getTerminator();
     if (count == 1 && br->getNumSuccessors() > 0 && bb.getSinglePredecessor()) {
       Q.push(&bb);
@@ -118,7 +116,7 @@ bool RADeadCodeElimination::eliminate_unconditional_branch(Function &F) {
     BasicBlock *bb_before = bb->getSinglePredecessor();
     Q.pop();
 
-    for (BasicBlock::iterator I = bb->begin(); I != bb->end(); ++I) {
+    for (auto I = bb->begin(); I != bb->end(); ++I) {
       ++InstructionsEliminated;
     }
 
@@ -134,9 +132,8 @@ bool RADeadCodeElimination::eliminate_unconditional_branch(Function &F) {
     BasicBlock *bb_after = bb->getTerminator()->getSuccessor(0);
 
     // update phi-node
-    for (BasicBlock::iterator I = bb_after->begin(); I != bb_after->end();
-         ++I) {
-      if (PHINode *phi = dyn_cast<PHINode>(I)) {
+    for (auto I = bb_after->begin(); I != bb_after->end(); ++I) {
+      if (auto *phi = dyn_cast<PHINode>(I)) {
         for (int i = 0; i < phi->getNumOperands(); ++i) {
           if (phi->getIncomingBlock(i) == bb) {
             phi->setIncomingBlock(i, bb_before);
@@ -167,7 +164,6 @@ bool RADeadCodeElimination::verify_equal(Range r1, Range r2) {
 }
 
 bool RADeadCodeElimination::solveBinaryInst(BasicBlock::iterator I) {
-
   Range r1 = ra->getRange(I->getOperand(0));
   Range r2 = ra->getRange(I->getOperand(1));
 
@@ -233,7 +229,6 @@ bool RADeadCodeElimination::solveBinaryInst(BasicBlock::iterator I) {
 }
 
 bool RADeadCodeElimination::eliminate_branch(Function &F) {
-
   bool change = false;
   Instruction *I;
   int succ;
@@ -320,7 +315,6 @@ bool RADeadCodeElimination::eliminate_instructions(Function &F) {
 }
 
 bool RADeadCodeElimination::solveICmpInstruction(ICmpInst *I) {
-
   ra = &getAnalysis<InterProceduralRA<Cousot>>();
   Range r1 = ra->getRange(I->getOperand(0));
   Range r2 = ra->getRange(I->getOperand(1));
@@ -407,7 +401,6 @@ bool RADeadCodeElimination::send_to_delete_branch(Instruction *I, int operand) {
 }
 
 bool RADeadCodeElimination::send_to_delete_instruction(Instruction *I) {
-
   for (auto ele : dead_op_bin) {
     if (ele.first == I)
       return false;

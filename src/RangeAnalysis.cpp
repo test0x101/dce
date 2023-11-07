@@ -3157,7 +3157,7 @@ void ConstraintGraph::buildSymbolicIntersectMap() {
 /*
  *	This method evaluates once each operation that uses a variable in
  *  component, so that the next SCCs after component will have entry
- *  points to kick start the range analysis algorithm.
+ *  points to kick-start the range analysis algorithm.
  */
 void ConstraintGraph::propagateToNextSCC(
     const SmallPtrSet<VarNode *, 32> &component) {
@@ -3208,7 +3208,7 @@ void Nuutila::delControlDependenceEdges(UseMap *useMap) {
     std::deque<ControlDep *> ops;
 
     for (auto sit : it->second) {
-      ControlDep *op = NULL;
+      ControlDep *op = nullptr;
 
       if ((op = dyn_cast<ControlDep>(sit))) {
         ops.push_back(op);
@@ -3218,7 +3218,7 @@ void Nuutila::delControlDependenceEdges(UseMap *useMap) {
     for (auto op : ops) {
       // Add pseudo edge to the string
       const Value *V = op->getSource()->getValue();
-      if (const ConstantInt *C = dyn_cast<ConstantInt>(V)) {
+      if (const auto *C = dyn_cast<ConstantInt>(V)) {
         pseudoEdgesString << " " << C->getValue() << " -> ";
       } else {
         pseudoEdgesString << " " << '"';
